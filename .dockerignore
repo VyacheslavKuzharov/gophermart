@@ -1,0 +1,12 @@
+.git
+
+*Dockerfile*
+*docker-compose*
+
+/.idea/
+**/log/*
+**/tmp/*
+
+./cmd/accrual
+
+./SPECIFICATION.md
