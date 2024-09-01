@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile.dev
     image: gophermart:dev
     container_name: "gophermart.dev"
+    command: /bin/sh -c "go run cmd/gophermart/main.go"
     env_file:
       - .env
     ports:

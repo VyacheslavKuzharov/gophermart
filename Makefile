@@ -52,7 +52,7 @@ restart: ### Restarting containers
 
 logs-app: ### Gophermart app container logs
 	@$(LOGS) --tail=500 -f app
-.PHONY: logs-go
+.PHONY: logs-app
 
 bash-app: ### app container bash
 	@$(EXEC) app /bin/sh
