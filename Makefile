@@ -9,6 +9,9 @@ START = docker-compose up -d
 STOP = docker-compose stop
 LOGS = docker-compose logs
 
+LOCAL_BIN:=$(CURDIR)/bin
+PATH:=$(LOCAL_BIN):$(PATH)
+
 .PHONY: help
 
 help: ## Display this help screen
@@ -57,3 +60,28 @@ logs-app: ### Gophermart app container logs
 bash-app: ### app container bash
 	@$(EXEC) app /bin/sh
 .PHONY: bash-app
+
+tidy: ### runs app go mod tidy
+	@$(RUN) app go mod tidy && go mod download
+.PHONY: tidy
+
+MIGRATION_NAME := $(or $(MIGRATION_NAME),migration_name)
+migrate-create:  ### create new migration. With specific name: MIGRATION_NAME="some_name"
+	GOBIN=$(LOCAL_BIN) migrate create -ext sql -dir migrations $(MIGRATION_NAME)
+.PHONY: db-migrate-create
+
+migrate-up: ### migration up
+	GOBIN=$(LOCAL_BIN) migrate -path migrations -database '$(PG_URL_LOCAL)?sslmode=disable' up
+.PHONY: db-migrate-up
+
+migrate-up-force: ### migration up force to fix DB on
+	GOBIN=$(LOCAL_BIN) migrate -path migrations -database '$(PG_URL_LOCAL)?sslmode=disable' force $(VERSION)
+.PHONY: db-migrate-up-force
+
+migrate-down: ### migration down
+	GOBIN=$(LOCAL_BIN) migrate -path migrations -database '$(PG_URL_LOCAL)?sslmode=disable' down $(STEP)
+.PHONY: db-migrate-down
+
+bin-deps:
+	GOBIN=$(LOCAL_BIN) go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+.PHONY: bin-deps
