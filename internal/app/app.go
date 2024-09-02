@@ -3,10 +3,13 @@ package app
 import (
 	"fmt"
 	"github.com/VyacheslavKuzharov/gophermart/config"
+	"github.com/VyacheslavKuzharov/gophermart/pkg/httpserver"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/logger"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/postgres"
-	"html"
-	"net/http"
+	"github.com/go-chi/chi/v5"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func Run(cfg *config.Config) {
@@ -27,13 +30,26 @@ func Run(cfg *config.Config) {
 
 	postgres.RunMigrations(cfg.PG.DatabaseUri, l)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	})
+	// Initialize Http server
+	router := chi.NewRouter()
 
-	http.HandleFunc("/howdy", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Howdy!")
-	})
+	httpServer := httpserver.New(router, cfg.HTTP.Addr)
+	l.Logger.Info().Msgf("Http server startad on: %s", cfg.HTTP.Addr)
 
-	l.Logger.Fatal().Err(http.ListenAndServe(":8080", nil))
+	// Waiting signal
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case s := <-interrupt:
+		l.Logger.Info().Msgf("app - Run - signal: %s", s.String())
+	case err = <-httpServer.Notify():
+		l.Logger.Err(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
+	}
+
+	// Shutdown
+	err = httpServer.Shutdown()
+	if err != nil {
+		l.Logger.Err(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
+	}
 }

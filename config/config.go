@@ -19,11 +19,12 @@ type (
 	App struct {
 		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
 		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
-		Env     string `env-required:"true"  env:"ENV"`
+		Env     string `env-required:"true"                env:"ENV"`
 	}
 
 	HTTP struct {
 		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
+		Addr string `env-required:"true"             env:"RUN_ADDRESS"`
 	}
 
 	Log struct {
@@ -62,6 +63,7 @@ func ProcessArgs(cfg *Config) error {
 	// create flag set using `flag` package
 	fset := flag.NewFlagSet("Example", flag.ContinueOnError)
 	fset.StringVar(&cfg.PG.DatabaseUri, "d", cfg.PG.DatabaseUri, "PG connection url")
+	fset.StringVar(&cfg.HTTP.Addr, "a", cfg.HTTP.Addr, "Http host and port")
 
 	// get config usage with wrapped flag usage
 	fset.Usage = cleanenv.FUsage(fset.Output(), &cfg, nil, fset.Usage)
