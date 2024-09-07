@@ -1,12 +1,12 @@
 app:
-  name: 'gophermart'
-  version: '1.0.0'
+  name: "gophermart"
+  version: "1.0.0"
 
 http:
-  port: '8080'
+  port: "8080"
 
 logger:
-  log_level: 'debug'
+  log_level: "debug"
 
 postgres:
   pool_max: 2

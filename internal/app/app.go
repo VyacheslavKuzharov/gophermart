@@ -3,6 +3,8 @@ package app
 import (
 	"fmt"
 	"github.com/VyacheslavKuzharov/gophermart/config"
+	"github.com/VyacheslavKuzharov/gophermart/internal/di"
+	api "github.com/VyacheslavKuzharov/gophermart/internal/transport/http"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/httpserver"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/logger"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/postgres"
@@ -24,17 +26,22 @@ func Run(cfg *config.Config) {
 	// Initialize Postgres
 	pg, err := postgres.New(cfg.PG.DatabaseUri, cfg.PG.PoolMax)
 	if err != nil {
-		l.Logger.Fatal().Err(err).Msg("app.Run postgres.New")
+		l.Logger.Fatal().Err(err).Msg("app.Run - postgres.New")
 	}
 	defer pg.Close()
 
 	postgres.RunMigrations(cfg.PG.DatabaseUri, l)
 
+	// Initialize Dependency injection Container
+	container := di.NewContainer(pg, l)
+
 	// Initialize Http server
 	router := chi.NewRouter()
 
+	api.RegisterRoutes(router, container)
+
 	httpServer := httpserver.New(router, cfg.HTTP.Addr)
-	l.Logger.Info().Msgf("Http server startad on: %s", cfg.HTTP.Addr)
+	l.Logger.Info().Msgf("Http server started on: %s", cfg.HTTP.Addr)
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
@@ -42,14 +49,14 @@ func Run(cfg *config.Config) {
 
 	select {
 	case s := <-interrupt:
-		l.Logger.Info().Msgf("app - Run - signal: %s", s.String())
+		l.Logger.Info().Msgf("app.Run - signal: %s", s.String())
 	case err = <-httpServer.Notify():
-		l.Logger.Err(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
+		l.Logger.Err(fmt.Errorf("app.Run - httpServer.Notify: %w", err))
 	}
 
 	// Shutdown
 	err = httpServer.Shutdown()
 	if err != nil {
-		l.Logger.Err(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
+		l.Logger.Err(fmt.Errorf("app.Run - httpServer.Shutdown: %w", err))
 	}
 }
