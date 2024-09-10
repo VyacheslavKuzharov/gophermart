@@ -2,26 +2,23 @@ package auth
 
 import (
 	"context"
-	"github.com/VyacheslavKuzharov/gophermart/internal/entity"
 	"github.com/VyacheslavKuzharov/gophermart/internal/repository/user"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/logger"
 )
 
 type UseCaseInterface interface {
-	SignUp(ctx context.Context, username, password string) (*entity.User, error)
-	SignIn(ctx context.Context, username, password string) (*entity.User, error)
+	SignUp(ctx context.Context, login, password string) (string, error)
+	SignIn(ctx context.Context, login, password string) (string, error)
 }
 
 type UseCase struct {
-	logger   *logger.Logger
 	userRepo user.RepositoryInterface
-	hashSalt string
+	logger   *logger.Logger
 }
 
-func NewUseCase(l *logger.Logger, userRepo user.RepositoryInterface, hashSalt string) *UseCase {
+func NewUseCase(userRepo user.RepositoryInterface, l *logger.Logger) *UseCase {
 	return &UseCase{
-		logger:   l,
 		userRepo: userRepo,
-		hashSalt: hashSalt,
+		logger:   l,
 	}
 }

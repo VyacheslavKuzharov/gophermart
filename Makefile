@@ -53,7 +53,7 @@ restart: ### Restarting containers
 	@$(MAKE) --no-print-directory status
 .PHONY: restart
 
-logs-app: ### Gophermart app container logs
+logs: ### Gophermart app container logs
 	@$(LOGS) --tail=500 -f app
 .PHONY: logs-app
 
@@ -86,7 +86,11 @@ linters: ### run linters
 	GOBIN=$(LOCAL_BIN) golangci-lint run && go vet -vettool=$(which statictest) ./...
 .PHONY: linters
 
-bin-deps:
+bin-deps: ### install binaries
 	GOBIN=$(LOCAL_BIN) go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.60.3
 .PHONY: bin-deps
+
+tests: ### run tests
+	go test -v -cover ./internal/...
+.PHONY: test

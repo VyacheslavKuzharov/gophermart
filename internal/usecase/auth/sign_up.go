@@ -2,29 +2,37 @@ package auth
 
 import (
 	"context"
-	"crypto/sha1"
-	"fmt"
 	"github.com/VyacheslavKuzharov/gophermart/internal/entity"
+	"github.com/VyacheslavKuzharov/gophermart/internal/lib/token"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func (uc *UseCase) SignUp(ctx context.Context, login, password string) (*entity.User, error) {
+func (uc *UseCase) SignUp(ctx context.Context, login, password string) (string, error) {
+	const target = "usecase.auth.SignUp"
 	log := uc.logger.Logger
-	pwd := sha1.New()
-	pwd.Write([]byte(password))
-	pwd.Write([]byte(uc.hashSalt))
 
-	user := &entity.User{
-		ID:       "1",
-		Login:    login,
-		Password: fmt.Sprintf("%x", pwd.Sum(nil)),
-	}
-
-	log.Info().Msg("SignUp")
-
-	u, err := uc.userRepo.GetByID(ctx, user.ID)
+	pwdBytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil {
-		return nil, err
+		log.Error().Err(err).Msgf("target: %s.generateHashPassword", target)
+		return "", NewErrGenPwdHash(password, err)
 	}
 
-	return u, nil
+	userDTO := &entity.UserDTO{
+		Login:    login,
+		Password: string(pwdBytes),
+	}
+
+	user, err := uc.userRepo.Create(ctx, userDTO)
+	if err != nil {
+		log.Error().Err(err).Msgf("target: %s.userRepo.Create", target)
+		return "", err
+	}
+
+	jwt, err := token.CreateJWT(user.ID)
+	if err != nil {
+		log.Error().Err(err).Msgf("target: %s.createToken", target)
+		return "", err
+	}
+
+	return jwt, nil
 }

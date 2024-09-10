@@ -8,21 +8,21 @@ import (
 )
 
 type Container struct {
-	pg     *postgres.Pg
-	logger *logger.Logger
+	Pg     *postgres.Pg
+	Logger *logger.Logger
 }
 
 func NewContainer(pg *postgres.Pg, l *logger.Logger) *Container {
 	return &Container{
-		pg:     pg,
-		logger: l,
+		Pg:     pg,
+		Logger: l,
 	}
 }
 
 func (c *Container) GetAuthUseCase() *auth.UseCase {
-	return auth.NewUseCase(c.logger, c.getUserRepo(), "qwerty")
+	return auth.NewUseCase(c.getUserRepo(), c.Logger)
 }
 
 func (c *Container) getUserRepo() *user.Repository {
-	return user.NewRepo(c.pg)
+	return user.NewRepo(c.Pg, c.Logger)
 }
