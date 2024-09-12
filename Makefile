@@ -78,7 +78,7 @@ migrate-up-force: ### migration up force to fix DB on
 	GOBIN=$(LOCAL_BIN) migrate -path migrations -database '$(PG_URL_LOCAL)?sslmode=disable' force $(VERSION)
 .PHONY: db-migrate-up-force
 
-migrate-down: ### migration down
+migrate-down: ### migration down, example: make migrate-down STEP=1
 	GOBIN=$(LOCAL_BIN) migrate -path migrations -database '$(PG_URL_LOCAL)?sslmode=disable' down $(STEP)
 .PHONY: db-migrate-down
 
