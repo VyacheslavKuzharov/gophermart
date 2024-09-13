@@ -5,10 +5,11 @@ import (
 	authhandler "github.com/VyacheslavKuzharov/gophermart/internal/transport/http/handlers/auth"
 	ordershandler "github.com/VyacheslavKuzharov/gophermart/internal/transport/http/handlers/orders"
 	"github.com/VyacheslavKuzharov/gophermart/internal/transport/http/middlewares"
+	"github.com/VyacheslavKuzharov/gophermart/internal/workers"
 	"github.com/go-chi/chi/v5"
 )
 
-func RegisterRoutes(router *chi.Mux, container *di.Container) {
+func RegisterRoutes(router *chi.Mux, container *di.Container, w workers.WorkerIface) {
 	router.Use(middlewares.Logger(container.Logger))
 
 	// api routes
@@ -24,7 +25,7 @@ func RegisterRoutes(router *chi.Mux, container *di.Container) {
 			user.Group(func(private chi.Router) {
 				private.Use(middlewares.Auth)
 
-				ordersHandler := ordershandler.New(container.GetOrdersUseCase())
+				ordersHandler := ordershandler.New(container.GetOrdersUseCase(), w)
 				private.Post("/orders", ordersHandler.Upload)
 			})
 		})

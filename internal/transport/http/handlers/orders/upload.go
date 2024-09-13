@@ -1,13 +1,12 @@
 package orders
 
 import (
-	"errors"
 	"fmt"
 	"github.com/VyacheslavKuzharov/gophermart/internal/lib/response"
-	"github.com/VyacheslavKuzharov/gophermart/internal/repository"
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type okResponse struct {
@@ -15,8 +14,8 @@ type okResponse struct {
 }
 
 func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	var pgUniqueFieldErr *repository.UniqueFieldErr
+	//ctx := r.Context()
+	//var pgUniqueFieldErr *repository.UniqueFieldErr
 
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -25,22 +24,24 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	orderNumber := string(b)
-	err = validateOrderNumber(orderNumber)
-	if err != nil {
-		response.Err(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = h.useCase.Upload(ctx, orderNumber)
-	if err != nil {
-		if errors.As(err, &pgUniqueFieldErr) {
-			response.OK(w, http.StatusOK, okResponse{Msg: "order already created"})
-			return
-		}
-
-		response.Err(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	workDuration, _ := time.ParseDuration("5s")
+	h.w.QueueTask(orderNumber, workDuration)
+	//err = validateOrderNumber(orderNumber)
+	//if err != nil {
+	//	response.Err(w, err.Error(), http.StatusBadRequest)
+	//	return
+	//}
+	//
+	//err = h.useCase.Upload(ctx, orderNumber)
+	//if err != nil {
+	//	if errors.As(err, &pgUniqueFieldErr) {
+	//		response.OK(w, http.StatusOK, okResponse{Msg: "order already created"})
+	//		return
+	//	}
+	//
+	//	response.Err(w, err.Error(), http.StatusBadRequest)
+	//	return
+	//}
 
 	w.WriteHeader(http.StatusAccepted)
 }

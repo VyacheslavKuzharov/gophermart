@@ -1,17 +1,22 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"github.com/VyacheslavKuzharov/gophermart/config"
 	"github.com/VyacheslavKuzharov/gophermart/internal/di"
+	"github.com/VyacheslavKuzharov/gophermart/internal/scheduler"
 	api "github.com/VyacheslavKuzharov/gophermart/internal/transport/http"
+	"github.com/VyacheslavKuzharov/gophermart/internal/workers"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/httpserver"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/logger"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/postgres"
 	"github.com/go-chi/chi/v5"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
+	"time"
 )
 
 func Run(cfg *config.Config) {
@@ -38,7 +43,17 @@ func Run(cfg *config.Config) {
 	// Initialize Http server
 	router := chi.NewRouter()
 
-	api.RegisterRoutes(router, container)
+	w := workers.New(3, 2)
+	l.Logger.Info().Msg("Starting workers.....")
+	w.Start(context.Background())
+
+	jobScheduler := scheduler.NewJobScheduler(1 * time.Second)
+	jobScheduler.Start()
+
+	job := scheduler.PrintJob{Message: "-----------Hello, World!----------->"}
+	jobScheduler.JobQueue <- job
+
+	api.RegisterRoutes(router, container, w)
 
 	httpServer := httpserver.New(router, cfg.HTTP.Addr)
 	l.Logger.Info().Msgf("Http server started on: %s", cfg.HTTP.Addr)
@@ -46,6 +61,8 @@ func Run(cfg *config.Config) {
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	fmt.Printf("Number of goroutines main: %d\n", runtime.NumGoroutine())
 
 	select {
 	case s := <-interrupt:
