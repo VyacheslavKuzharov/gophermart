@@ -94,3 +94,7 @@ bin-deps: ### install binaries
 tests: ### run tests
 	go test -v -cover ./internal/...
 .PHONY: test
+
+tests-coverage: ### run tests coverage
+	go test -v -coverpkg=./internal/... -coverprofile=coverage.out ./... && go tool cover -func coverage.out
+.PHONY: test

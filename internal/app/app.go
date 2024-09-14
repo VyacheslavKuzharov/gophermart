@@ -15,6 +15,8 @@ import (
 )
 
 func Run(cfg *config.Config) {
+	const target = "app.run"
+
 	// Initialize Logger
 	l := logger.New(cfg.Log.Level)
 	l.Logger.
@@ -26,7 +28,7 @@ func Run(cfg *config.Config) {
 	// Initialize Postgres
 	pg, err := postgres.New(cfg.PG.DatabaseUri, cfg.PG.PoolMax)
 	if err != nil {
-		l.Logger.Fatal().Err(err).Msg("app.Run - postgres.New")
+		l.Logger.Fatal().Err(err).Msgf("target: %s.postgres.New", target)
 	}
 	defer pg.Close()
 
@@ -49,14 +51,14 @@ func Run(cfg *config.Config) {
 
 	select {
 	case s := <-interrupt:
-		l.Logger.Info().Msgf("app.Run - signal: %s", s.String())
+		l.Logger.Info().Msgf("target: %s signal: %s", target, s.String())
 	case err = <-httpServer.Notify():
-		l.Logger.Err(fmt.Errorf("app.Run - httpServer.Notify: %w", err))
+		l.Logger.Err(fmt.Errorf("target: %s.httpServer.Notify: %w", target, err))
 	}
 
 	// Shutdown
 	err = httpServer.Shutdown()
 	if err != nil {
-		l.Logger.Err(fmt.Errorf("app.Run - httpServer.Shutdown: %w", err))
+		l.Logger.Err(fmt.Errorf("target: %s.httpServer.Shutdown: %w", target, err))
 	}
 }
