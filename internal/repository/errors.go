@@ -39,3 +39,19 @@ func NewNotFountErr(entity, field, value string, err error) error {
 		Err:    err,
 	}
 }
+
+type ConflictErr struct {
+	Value string
+	Err   error
+}
+
+func (e *ConflictErr) Error() string {
+	return fmt.Sprintf("value: %s, already uploaded by another user", e.Value)
+}
+
+func NewConflictErr(v string, err error) error {
+	return &ConflictErr{
+		Value: v,
+		Err:   err,
+	}
+}

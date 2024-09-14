@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/VyacheslavKuzharov/gophermart/internal/di"
 	authhandler "github.com/VyacheslavKuzharov/gophermart/internal/transport/http/handlers/auth"
+	ordershandler "github.com/VyacheslavKuzharov/gophermart/internal/transport/http/handlers/orders"
 	"github.com/VyacheslavKuzharov/gophermart/internal/transport/http/middlewares"
 	"github.com/go-chi/chi/v5"
 )
@@ -21,9 +22,10 @@ func RegisterRoutes(router *chi.Mux, container *di.Container) {
 				public.Post("/login", handler.SignIn)
 			})
 			user.Group(func(private chi.Router) {
-				//private.Use(middlewares.Auth)
+				private.Use(middlewares.Auth)
 
-				//private.Get("/orders", ordersHandler)
+				ordersHandler := ordershandler.New(container.GetOrdersUseCase())
+				private.Post("/orders", ordersHandler.Upload)
 			})
 		})
 	})

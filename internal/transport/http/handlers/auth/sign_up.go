@@ -55,7 +55,7 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie := http.Cookie{
-		Name:  "Authorization",
+		Name:  CookieName,
 		Value: token,
 		Path:  "/",
 	}
