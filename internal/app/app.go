@@ -5,6 +5,7 @@ import (
 	"github.com/VyacheslavKuzharov/gophermart/config"
 	"github.com/VyacheslavKuzharov/gophermart/internal/di"
 	api "github.com/VyacheslavKuzharov/gophermart/internal/transport/http"
+	"github.com/VyacheslavKuzharov/gophermart/internal/workers"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/httpserver"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/logger"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/postgres"
@@ -39,11 +40,13 @@ func Run(cfg *config.Config) {
 
 	// Initialize Http server
 	router := chi.NewRouter()
-
 	api.RegisterRoutes(router, container)
 
 	httpServer := httpserver.New(router, cfg.HTTP.Addr)
 	l.Logger.Info().Msgf("Http server started on: %s", cfg.HTTP.Addr)
+
+	// Initialize background workers
+	workers.Run(cfg, l)
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
