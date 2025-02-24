@@ -10,3 +10,6 @@ logger:
 
 postgres:
   pool_max: 2
+
+worker:
+  poling: 5

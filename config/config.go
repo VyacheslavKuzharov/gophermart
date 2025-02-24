@@ -10,10 +10,11 @@ import (
 type (
 	// Config - struct describes Application configs
 	Config struct {
-		App  `yaml:"app"`
-		HTTP `yaml:"http"`
-		Log  `yaml:"logger"`
-		PG   `yaml:"postgres"`
+		App    `yaml:"app"`
+		HTTP   `yaml:"http"`
+		Log    `yaml:"logger"`
+		PG     `yaml:"postgres"`
+		Worker `yaml:"worker"`
 	}
 
 	App struct {
@@ -24,8 +25,9 @@ type (
 	}
 
 	HTTP struct {
-		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
-		Addr string `env-required:"true"             env:"RUN_ADDRESS"`
+		Port        string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
+		Addr        string `env-required:"true"             env:"RUN_ADDRESS"`
+		AccrualAddr string `env-required:"true"             env:"ACCRUAL_SYSTEM_ADDRESS"`
 	}
 
 	Log struct {
@@ -35,6 +37,10 @@ type (
 	PG struct {
 		PoolMax     int    `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
 		DatabaseUri string `env-required:"true"                 env:"DATABASE_URI"`
+	}
+
+	Worker struct {
+		Poling int `env-required:"true" yaml:"poling"`
 	}
 )
 
@@ -65,6 +71,7 @@ func ProcessArgs(cfg *Config) error {
 	fset := flag.NewFlagSet("Example", flag.ContinueOnError)
 	fset.StringVar(&cfg.PG.DatabaseUri, "d", cfg.PG.DatabaseUri, "PG connection url")
 	fset.StringVar(&cfg.HTTP.Addr, "a", cfg.HTTP.Addr, "Http host and port")
+	fset.StringVar(&cfg.HTTP.AccrualAddr, "r", cfg.HTTP.AccrualAddr, "Accrual system address")
 
 	// get config usage with wrapped flag usage
 	fset.Usage = cleanenv.FUsage(fset.Output(), &cfg, nil, fset.Usage)

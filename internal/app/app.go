@@ -5,7 +5,6 @@ import (
 	"github.com/VyacheslavKuzharov/gophermart/config"
 	"github.com/VyacheslavKuzharov/gophermart/internal/di"
 	api "github.com/VyacheslavKuzharov/gophermart/internal/transport/http"
-	"github.com/VyacheslavKuzharov/gophermart/internal/workers"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/httpserver"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/logger"
 	"github.com/VyacheslavKuzharov/gophermart/pkg/postgres"
@@ -36,7 +35,7 @@ func Run(cfg *config.Config) {
 	postgres.RunMigrations(cfg.PG.DatabaseUri, l)
 
 	// Initialize Dependency injection Container
-	container := di.NewContainer(pg, l)
+	container := di.NewContainer(pg, cfg, l)
 
 	// Initialize Http server
 	router := chi.NewRouter()
@@ -46,22 +45,26 @@ func Run(cfg *config.Config) {
 	l.Logger.Info().Msgf("Http server started on: %s", cfg.HTTP.Addr)
 
 	// Initialize background workers
-	workers.Run(cfg, l)
+	worker := container.GetOrdersWorker()
+	worker.Start()
 
 	// Waiting signal
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 
 	select {
-	case s := <-interrupt:
+	case s := <-done:
 		l.Logger.Info().Msgf("target: %s signal: %s", target, s.String())
 	case err = <-httpServer.Notify():
 		l.Logger.Err(fmt.Errorf("target: %s.httpServer.Notify: %w", target, err))
 	}
 
-	// Shutdown
+	// Shutdown http server
 	err = httpServer.Shutdown()
 	if err != nil {
 		l.Logger.Err(fmt.Errorf("target: %s.httpServer.Shutdown: %w", target, err))
 	}
+
+	// Stop background workers
+	worker.Stop()
 }

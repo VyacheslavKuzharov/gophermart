@@ -10,6 +10,9 @@ import (
 type RepositoryInterface interface {
 	Create(ctx context.Context, orderDTO *entity.OrderDTO) error
 	GetByNumber(ctx context.Context, number string) (entity.Order, error)
+	GetManyByStatuses(ctx context.Context, statuses []string) ([]entity.Order, error)
+	UpdateStatus(ctx context.Context, status, number string) error
+	UpdateAccrualStatus(ctx context.Context, accrual int, status, number string) error
 }
 
 type Repository struct {
